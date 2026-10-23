@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Cohérence">
+  <title>Cohérence</title>
+  <style>
+    :root {
+      --bg: #f6f4ef;
+      --carte: #ffffff;
+      --texte: #1f2933;
+      --discret: #7b8794;
+      --bordure: #e3ded3;
+      --vide: #ebe7de;
+      --flamme: #e8590c;
+      --partiel-clair: #f6dcbd;
+      --partiel: #f0b878;
+      --valide: #2f9e44;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #14161a; --carte: #1e2127; --texte: #eef0f2; --discret: #8a929c;
+        --bordure: #2f333b; --vide: #2a2e35; --partiel-clair: #4a3a2a; --partiel: #8a5a2b;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0 auto; max-width: 480px;
+      padding: calc(env(safe-area-inset-top) + 24px) 16px calc(env(safe-area-inset-bottom) + 32px);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      background: var(--bg); color: var(--texte);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* --- Bloc streak --- */
+    .streak { text-align: center; margin-bottom: 24px; }
+    .streak-nombre { font-size: 64px; font-weight: 700; line-height: 1; }
+    .streak-nombre span { font-size: 48px; }
+    .streak-label { color: var(--discret); margin-top: 6px; }
+    .streak-conseil { margin-top: 10px; font-size: 14px; color: var(--flamme); min-height: 1.2em; }
+
+    /* --- Cartes --- */
+    .carte { background: var(--carte); border: 1px solid var(--bordure); border-radius: 16px; padding: 16px; margin-bottom: 16px; }
+    .carte-titre { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 12px; font-size: 17px; }
+    .carte-titre small { color: var(--discret); font-weight: 400; font-size: 14px; }
+
+    /* --- Les 3 séances --- */
+    .seances { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .seance {
+      appearance: none; border: 2px solid var(--bordure); background: transparent; color: var(--texte);
+      border-radius: 14px; padding: 18px 0 14px; font: inherit; font-size: 15px; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+    }
+    .seance .coche {
+      width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--bordure);
+      display: grid; place-items: center; font-size: 18px; color: transparent;
+    }
+    .seance.faite { border-color: var(--valide); }
+    .seance.faite .coche { background: var(--valide); border-color: var(--valide); color: #fff; }
+
+    /* --- Calendrier --- */
+    .jours-semaine, .calendrier { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+    .jours-semaine { color: var(--discret); font-size: 12px; text-align: center; margin-bottom: 6px; }
+    .jour {
+      appearance: none; border: 2px solid transparent; aspect-ratio: 1; border-radius: 8px; padding: 0;
+      background: var(--vide); color: var(--texte); font: inherit; font-size: 13px; cursor: pointer;
+    }
+    .jour.n1 { background: var(--partiel-clair); }
+    .jour.n2 { background: var(--partiel); }
+    .jour.n3 { background: var(--valide); color: #fff; }
+    .jour.aujourdhui { font-weight: 700; }
+    .jour.selection { border-color: var(--texte); }
+    .jour.futur { visibility: hidden; }
+    .legende { display: flex; gap: 12px; justify-content: center; margin-top: 12px; font-size: 12px; color: var(--discret); }
+    .legende i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
+  </style>
+</head>
+<body>
+
+  <section class="streak">
+    <div class="streak-nombre"><span>🔥</span> <b id="streak">0</b></div>
+    <div class="streak-label" id="streak-label">jour d'affilée</div>
+    <div class="streak-conseil" id="conseil"></div>
+  </section>
+
+  <section class="carte">
+    <h2 class="carte-titre"><span id="titre-jour">Aujourd'hui</span><small id="compteur">0/3</small></h2>
+    <div class="seances" id="seances"></div>
+  </section>
+
+  <section class="carte">
+    <h2 class="carte-titre"><span>5 dernières semaines</span><small id="record">Record : 0</small></h2>
+    <div class="jours-semaine"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+    <div class="calendrier" id="calendrier"></div>
+    <div class="legende">
+      <span><i style="background:var(--vide)"></i>0</span>
+      <span><i style="background:var(--partiel-clair)"></i>1</span>
+      <span><i style="background:var(--partiel)"></i>2</span>
+      <span><i style="background:var(--valide)"></i>3 séances</span>
+    </div>
+  </section>
+
+<script>
+// ============ 1. Réglages ============
+const CLE_STOCKAGE = "coherence-v1";
+const SEANCES = ["Matin", "Midi", "Soir"];
+const OBJECTIF = 3; // 1 jour de streak = 3 séances cochées
+
+// ============ 2. Outils de dates ============
+// Clé "AAAA-MM-JJ" en heure LOCALE (toISOString donnerait l'heure UTC → décalage après minuit)
+function cleDuJour(d) {
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const j = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${m}-${j}`;
+}
+// L'inverse : "AAAA-MM-JJ" → Date locale (new Date("AAAA-MM-JJ") la lirait en UTC)
+function dateDepuisCle(cle) {
+  const [a, m, j] = cle.split("-").map(Number);
+  return new Date(a, m - 1, j);
+}
+function decaler(d, nbJours) {
+  const copie = new Date(d);
+  copie.setDate(copie.getDate() + nbJours);
+  return copie;
+}
+
+// ============ 3. Données ============
+// Format stocké : { "2026-10-23": [true, false, true], ... }
+function charger() {
+  try { return JSON.parse(localStorage.getItem(CLE_STOCKAGE)) || {}; }
+  catch { return {}; }
+}
+function sauver() {
+  try { localStorage.setItem(CLE_STOCKAGE, JSON.stringify(donnees)); }
+  catch { /* stockage indisponible : l'app fonctionne quand même, sans sauvegarde */ }
+}
+
+let donnees = charger();
+let jourSelectionne = cleDuJour(new Date());
+
+function seancesDu(cle) { return donnees[cle] || [false, false, false]; }
+function nbFaites(cle)  { return seancesDu(cle).filter(Boolean).length; }
+function estValide(cle) { return nbFaites(cle) >= OBJECTIF; }
+
+// ============ 4. Calcul des streaks ============
+function streakActuel() {
+  let d = new Date();
+  // Aujourd'hui pas encore complet ? Le streak n'est pas cassé : on compte à partir d'hier.
+  if (!estValide(cleDuJour(d))) d = decaler(d, -1);
+  let n = 0;
+  while (estValide(cleDuJour(d))) {
+    n++;
+    d = decaler(d, -1);
+  }
+  return n;
+}
+
+function meilleurStreak() {
+  // Le format AAAA-MM-JJ se trie dans l'ordre chronologique avec un simple sort()
+  const jours = Object.keys(donnees).filter(estValide).sort();
+  let record = 0, enCours = 0, precedent = null;
+  for (const cle of jours) {
+    const consecutif = precedent && cleDuJour(decaler(dateDepuisCle(precedent), 1)) === cle;
+    enCours = consecutif ? enCours + 1 : 1;
+    record = Math.max(record, enCours);
+    precedent = cle;
+  }
+  return record;
+}
+
+// ============ 5. Actions ============
+function basculer(i) {
+  const s = [...seancesDu(jourSelectionne)];
+  s[i] = !s[i];
+  if (s.some(Boolean)) donnees[jourSelectionne] = s;
+  else delete donnees[jourSelectionne]; // on ne garde pas les jours vides
+  sauver();
+  afficher();
+}
+
+function selectionner(cle) {
+  jourSelectionne = cle;
+  afficher();
+}
+
+// ============ 6. Affichage ============
+function libelleJour(cle) {
+  if (cle === cleDuJour(new Date())) return "Aujourd'hui";
+  if (cle === cleDuJour(decaler(new Date(), -1))) return "Hier";
+  const txt = dateDepuisCle(cle).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+  return txt.charAt(0).toUpperCase() + txt.slice(1);
+}
+
+function afficher() {
+  const aujourdhui = cleDuJour(new Date());
+
+  // Bloc streak
+  const streak = streakActuel();
+  document.getElementById("streak").textContent = streak;
+  document.getElementById("streak-label").textContent = streak > 1 ? "jours d'affilée" : "jour d'affilée";
+  const reste = OBJECTIF - nbFaites(aujourdhui);
+  document.getElementById("conseil").textContent = reste > 0
+    ? `Encore ${reste} séance${reste > 1 ? "s" : ""} aujourd'hui pour passer à ${streak + 1}`
+    : "Journée validée ✓";
+
+  // Les 3 séances du jour sélectionné
+  document.getElementById("titre-jour").textContent = libelleJour(jourSelectionne);
+  document.getElementById("compteur").textContent = `${nbFaites(jourSelectionne)}/${OBJECTIF}`;
+  const s = seancesDu(jourSelectionne);
+  document.getElementById("seances").innerHTML = SEANCES.map((nom, i) => `
+    <button class="seance ${s[i] ? "faite" : ""}" onclick="basculer(${i})" aria-pressed="${s[i]}">
+      <span class="coche">✓</span>${nom}
+    </button>`).join("");
+
+  // Calendrier : 5 semaines, du lundi d'il y a 4 semaines au dimanche de cette semaine
+  const auj = new Date();
+  const lundi = decaler(auj, -((auj.getDay() + 6) % 7) - 28); // getDay() : dimanche = 0, on veut lundi = 0
+  let html = "";
+  for (let k = 0; k < 35; k++) {
+    const d = decaler(lundi, k);
+    const cle = cleDuJour(d);
+    const classes = ["jour", `n${nbFaites(cle)}`];
+    if (cle === aujourdhui) classes.push("aujourdhui");
+    if (cle === jourSelectionne) classes.push("selection");
+    if (cle > aujourdhui) classes.push("futur");
+    html += `<button class="${classes.join(" ")}" onclick="selectionner('${cle}')">${d.getDate()}</button>`;
+  }
+  document.getElementById("calendrier").innerHTML = html;
+  document.getElementById("record").textContent = `Record : ${meilleurStreak()}`;
+}
+
+// Rafraîchir quand on rouvre l'app (utile si on passe minuit entre deux ouvertures)
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") afficher();
+});
+
+afficher();
+</script>
+</body>
+</html>
