@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Cohérence">
-  <title>Cohérence</title>
+  <meta name="apple-mobile-web-app-title" content="Kaizn">
+  <title>Kaizn</title>
   <style>
     :root {
       --bg: #f6f4ef;
@@ -19,6 +19,7 @@
       --partiel-clair: #f6dcbd;
       --partiel: #f0b878;
       --valide: #2f9e44;
+      --bleu: #3b82c4;
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -76,10 +77,48 @@
     .jour.futur { visibility: hidden; }
     .legende { display: flex; gap: 12px; justify-content: center; margin-top: 12px; font-size: 12px; color: var(--discret); }
     .legende i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
+
+    /* --- En-tête & onglets --- */
+    .marque { text-align: center; font-size: 22px; font-weight: 700; letter-spacing: .5px; margin-bottom: 16px; }
+    .onglets { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: var(--vide); border-radius: 12px; padding: 4px; margin-bottom: 20px; }
+    .onglet { appearance: none; border: 0; background: transparent; color: var(--discret); font: inherit; font-size: 15px; padding: 9px 0; border-radius: 9px; cursor: pointer; }
+    .onglet.actif { background: var(--carte); color: var(--texte); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+    .vue[hidden] { display: none; }
+
+    /* --- Navigation entre les jours (bruxisme) --- */
+    .nav-jour { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .nav-jour button { appearance: none; border: 1px solid var(--bordure); background: var(--carte); color: var(--texte); width: 40px; height: 40px; border-radius: 12px; font-size: 20px; cursor: pointer; }
+    .nav-jour button:disabled { opacity: .3; cursor: default; }
+    .nav-jour span { font-weight: 600; }
+
+    /* --- Saisie des scores 0-10 --- */
+    .question { margin: 0 0 4px; font-size: 16px; font-weight: 600; }
+    .echelle { color: var(--discret); font-size: 12px; margin-bottom: 10px; }
+    .notes { display: grid; grid-template-columns: repeat(11, 1fr); gap: 4px; }
+    .note { appearance: none; border: 1px solid var(--bordure); background: transparent; color: var(--texte); font: inherit; font-size: 13px; padding: 10px 0; border-radius: 8px; cursor: pointer; }
+    .notes.sommeil .note.sel { background: var(--bleu); border-color: var(--bleu); color: #fff; }
+    .notes.machoire .note.sel { background: var(--flamme); border-color: var(--flamme); color: #fff; }
+    .sous-ligne { color: var(--discret); font-size: 13px; margin-top: 8px; min-height: 1.2em; }
+
+    /* --- Graphiques --- */
+    .periodes { display: flex; gap: 6px; margin-bottom: 16px; }
+    .periode { appearance: none; border: 1px solid var(--bordure); background: var(--carte); color: var(--discret); font: inherit; font-size: 13px; padding: 6px 14px; border-radius: 999px; cursor: pointer; }
+    .periode.actif { background: var(--texte); border-color: var(--texte); color: var(--bg); }
+    .graph svg { width: 100%; height: auto; display: block; }
+    .graph .grille { stroke: var(--bordure); stroke-width: 1; }
+    .graph .axe { fill: var(--discret); font-size: 10px; }
+    .graph .vide { fill: var(--discret); font-size: 12px; text-anchor: middle; }
   </style>
 </head>
 <body>
 
+  <div class="marque">Kaizn</div>
+  <nav class="onglets">
+    <button class="onglet actif" id="onglet-coherence" onclick="changerVue('coherence')">Cohérence</button>
+    <button class="onglet" id="onglet-bruxisme" onclick="changerVue('bruxisme')">Bruxisme</button>
+  </nav>
+
+  <div class="vue" id="vue-coherence">
   <section class="streak">
     <div class="streak-nombre"><span>🔥</span> <b id="streak">0</b></div>
     <div class="streak-label" id="streak-label">jour d'affilée</div>
@@ -102,10 +141,44 @@
       <span><i style="background:var(--valide)"></i>3 séances</span>
     </div>
   </section>
+  </div>
+
+  <div class="vue" id="vue-bruxisme" hidden>
+    <div class="nav-jour">
+      <button onclick="changerJourBrux(-1)" aria-label="Jour précédent">‹</button>
+      <span id="titre-jour-brux">Aujourd'hui</span>
+      <button id="btn-jour-suivant" onclick="changerJourBrux(1)" aria-label="Jour suivant">›</button>
+    </div>
+
+    <section class="carte">
+      <h3 class="question">Qualité du sommeil</h3>
+      <div class="echelle">0 = très mauvaise · 10 = excellente</div>
+      <div class="notes sommeil" id="notes-sommeil"></div>
+    </section>
+
+    <section class="carte">
+      <h3 class="question">Mâchoire tendue</h3>
+      <div class="echelle">0 = détendue · 10 = très tendue</div>
+      <div class="notes machoire" id="notes-machoire"></div>
+    </section>
+
+    <div class="periodes" id="periodes"></div>
+
+    <section class="carte graph">
+      <h2 class="carte-titre"><span>Qualité du sommeil</span><small id="moy-sommeil"></small></h2>
+      <div id="graph-sommeil"></div>
+    </section>
+
+    <section class="carte graph">
+      <h2 class="carte-titre"><span>Mâchoire tendue</span><small id="moy-machoire"></small></h2>
+      <div id="graph-machoire"></div>
+    </section>
+  </div>
 
 <script>
 // ============ 1. Réglages ============
-const CLE_STOCKAGE = "coherence-v1";
+const CLE_STOCKAGE = "coherence-v1"; // clé conservée telle quelle pour ne pas perdre les streaks existants
+const CLE_BRUXISME = "kaizn-bruxisme-v1";
 const SEANCES = ["Matin", "Midi", "Soir"];
 const OBJECTIF = 3; // 1 jour de streak = 3 séances cochées
 
@@ -232,12 +305,128 @@ function afficher() {
   document.getElementById("record").textContent = `Record : ${meilleurStreak()}`;
 }
 
+
+// ============ 7. Bruxisme : données ============
+// Format stocké : { "2026-11-24": { sommeil: 7, machoire: 3 }, ... } (un score peut manquer)
+function chargerBrux() {
+  try { return JSON.parse(localStorage.getItem(CLE_BRUXISME)) || {}; }
+  catch { return {}; }
+}
+function sauverBrux() {
+  try { localStorage.setItem(CLE_BRUXISME, JSON.stringify(donneesBrux)); }
+  catch { /* stockage indisponible */ }
+}
+let donneesBrux = chargerBrux();
+let jourBrux = cleDuJour(new Date());
+let periodeBrux = 30; // nombre de jours affichés sur les graphiques
+const MESURES = {
+  sommeil:  { couleur: "var(--bleu)" },
+  machoire: { couleur: "var(--flamme)" },
+};
+
+// Cliquer sur le score déjà choisi l'efface
+function noter(mesure, valeur) {
+  const jour = { ...(donneesBrux[jourBrux] || {}) };
+  if (jour[mesure] === valeur) delete jour[mesure]; else jour[mesure] = valeur;
+  if (Object.keys(jour).length) donneesBrux[jourBrux] = jour; else delete donneesBrux[jourBrux];
+  sauverBrux();
+  afficherBrux();
+}
+
+function changerJourBrux(delta) {
+  const cible = cleDuJour(decaler(dateDepuisCle(jourBrux), delta));
+  if (cible > cleDuJour(new Date())) return; // pas de saisie dans le futur
+  jourBrux = cible;
+  afficherBrux();
+}
+
+function changerPeriode(n) { periodeBrux = n; afficherBrux(); }
+
+// ============ 8. Bruxisme : graphiques ============
+// Courbe SVG : un point par jour renseigné, la ligne se coupe quand un jour est manquant
+function graphiqueSVG(mesure) {
+  const L = 400, H = 170, gauche = 26, droite = 10, haut = 10, bas = 22;
+  const larg = L - gauche - droite, haut_ = H - haut - bas;
+  const n = periodeBrux;
+  const fin = new Date();
+  const jours = Array.from({ length: n }, (_, i) => decaler(fin, i - (n - 1)));
+  const x = i => gauche + (n === 1 ? larg / 2 : (i * larg) / (n - 1));
+  const y = v => haut + haut_ * (1 - v / 10); // 10 en haut, 0 en bas
+
+  let svg = `<svg viewBox="0 0 ${L} ${H}" role="img" aria-label="Évolution : ${mesure}">`;
+  for (const v of [0, 5, 10]) {
+    svg += `<line class="grille" x1="${gauche}" x2="${L - droite}" y1="${y(v)}" y2="${y(v)}"/>`;
+    svg += `<text class="axe" x="${gauche - 6}" y="${y(v) + 3}" text-anchor="end">${v}</text>`;
+  }
+  // Étiquettes de dates : début, milieu, fin
+  for (const i of [0, Math.floor((n - 1) / 2), n - 1]) {
+    const d = jours[i];
+    const ancre = i === 0 ? "start" : i === n - 1 ? "end" : "middle";
+    svg += `<text class="axe" x="${x(i)}" y="${H - 6}" text-anchor="${ancre}">${d.getDate()}/${d.getMonth() + 1}</text>`;
+  }
+
+  const couleur = MESURES[mesure].couleur;
+  let trace = "", precedentRenseigne = false, nbPoints = 0, somme = 0, points = "";
+  jours.forEach((d, i) => {
+    const v = (donneesBrux[cleDuJour(d)] || {})[mesure];
+    if (v === undefined) { precedentRenseigne = false; return; }
+    trace += `${precedentRenseigne ? "L" : "M"}${x(i).toFixed(1)} ${y(v).toFixed(1)} `;
+    points += `<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="${n > 30 ? 2 : 3.5}" fill="${couleur}"/>`;
+    precedentRenseigne = true; nbPoints++; somme += v;
+  });
+  if (nbPoints === 0) {
+    svg += `<text class="vide" x="${L / 2}" y="${H / 2}">Pas encore de données sur cette période</text>`;
+  } else {
+    svg += `<path d="${trace}" fill="none" stroke="${couleur}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${points}`;
+  }
+  svg += "</svg>";
+
+  const moyenne = nbPoints ? (somme / nbPoints).toLocaleString("fr-FR", { maximumFractionDigits: 1 }) : "–";
+  return { svg, resume: nbPoints ? `Moyenne : ${moyenne} · ${nbPoints} j` : "" };
+}
+
+function afficherBrux() {
+  // Navigation entre jours
+  document.getElementById("titre-jour-brux").textContent = libelleJour(jourBrux);
+  document.getElementById("btn-jour-suivant").disabled = jourBrux >= cleDuJour(new Date());
+
+  // Saisie : 11 boutons de 0 à 10 pour chaque score
+  const jour = donneesBrux[jourBrux] || {};
+  for (const mesure of ["sommeil", "machoire"]) {
+    document.getElementById(`notes-${mesure}`).innerHTML = Array.from({ length: 11 }, (_, v) =>
+      `<button class="note ${jour[mesure] === v ? "sel" : ""}" onclick="noter('${mesure}', ${v})" aria-pressed="${jour[mesure] === v}">${v}</button>`
+    ).join("");
+  }
+
+  // Choix de la période
+  document.getElementById("periodes").innerHTML = [7, 30, 90].map(n =>
+    `<button class="periode ${n === periodeBrux ? "actif" : ""}" onclick="changerPeriode(${n})">${n} jours</button>`
+  ).join("");
+
+  // Graphiques
+  for (const mesure of ["sommeil", "machoire"]) {
+    const g = graphiqueSVG(mesure);
+    document.getElementById(`graph-${mesure}`).innerHTML = g.svg;
+    document.getElementById(`moy-${mesure}`).textContent = g.resume;
+  }
+}
+
+// ============ 9. Onglets ============
+function changerVue(nom) {
+  for (const v of ["coherence", "bruxisme"]) {
+    document.getElementById(`vue-${v}`).hidden = v !== nom;
+    document.getElementById(`onglet-${v}`).classList.toggle("actif", v === nom);
+  }
+  if (nom === "bruxisme") afficherBrux(); else afficher();
+}
+
 // Rafraîchir quand on rouvre l'app (utile si on passe minuit entre deux ouvertures)
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible") afficher();
+  if (document.visibilityState === "visible") { afficher(); afficherBrux(); }
 });
 
 afficher();
+afficherBrux();
 </script>
 </body>
 </html>
