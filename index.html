@@ -6,106 +6,108 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Kaizn">
+  <meta name="theme-color" content="#4a2a28">
   <title>Kaizn</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono&family=Inter+Tight:wght@300;400;500;600&display=swap">
   <style>
+    /* ============ DA « Ambre » : fond grainé, crème, typo fine ============ */
     :root {
-      --bg: #f6f4ef;
-      --carte: #ffffff;
-      --texte: #1f2933;
-      --discret: #7b8794;
-      --bordure: #e3ded3;
-      --vide: #ebe7de;
-      --flamme: #e8590c;
-      --partiel-clair: #f6dcbd;
-      --partiel: #f0b878;
-      --valide: #2f9e44;
-      --bleu: #3b82c4;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #14161a; --carte: #1e2127; --texte: #eef0f2; --discret: #8a929c;
-        --bordure: #2f333b; --vide: #2a2e35; --partiel-clair: #4a3a2a; --partiel: #8a5a2b;
-      }
+      color-scheme: dark;
+      --fond: #4a2a28;
+      --texte: #fff9f3;
+      --creme: #f6e6d6;
+      --encre: #43251f;
+      --discret: rgba(255, 249, 243, .78);
+      --bordure: rgba(255, 249, 243, .28);
+      --grille: rgba(255, 249, 243, .16);
+      --peche: #ffbfa0;
+      --police: "Inter Tight", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      --mono: "DM Mono", ui-monospace, Menlo, monospace;
     }
     * { box-sizing: border-box; }
+    html { background: var(--fond); }
     body {
-      margin: 0 auto; max-width: 480px;
-      padding: calc(env(safe-area-inset-top) + 24px) 16px calc(env(safe-area-inset-bottom) + 32px);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-      background: var(--bg); color: var(--texte);
+      margin: 0 auto; max-width: 480px; min-height: 100vh;
+      padding: calc(env(safe-area-inset-top) + 24px) 24px calc(env(safe-area-inset-bottom) + 32px);
+      font-family: var(--police); color: var(--texte);
       -webkit-tap-highlight-color: transparent;
     }
-
-    /* --- Bloc streak --- */
-    .streak { text-align: center; margin-bottom: 24px; }
-    .streak-nombre { font-size: 64px; font-weight: 700; line-height: 1; }
-    .streak-nombre span { font-size: 48px; }
-    .streak-label { color: var(--discret); margin-top: 6px; }
-    .streak-conseil { margin-top: 10px; font-size: 14px; color: var(--flamme); min-height: 1.2em; }
-
-    /* --- Cartes --- */
-    .carte { background: var(--carte); border: 1px solid var(--bordure); border-radius: 16px; padding: 16px; margin-bottom: 16px; }
-    .carte-titre { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 12px; font-size: 17px; }
-    .carte-titre small { color: var(--discret); font-weight: 400; font-size: 14px; }
-
-    /* --- Les 3 séances --- */
-    .seances { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .seance {
-      appearance: none; border: 2px solid var(--bordure); background: transparent; color: var(--texte);
-      border-radius: 14px; padding: 18px 0 14px; font: inherit; font-size: 15px; cursor: pointer;
-      display: flex; flex-direction: column; align-items: center; gap: 8px;
+    /* Fond fixe : un calque à part, car background-attachment: fixed ne marche pas sur iPhone */
+    body::before {
+      content: ""; position: fixed; top: 0; right: 0; left: 0; height: 100lvh; z-index: -1;
+      background: var(--fond) url("fond-ambre.jpg") center / cover no-repeat;
     }
-    .seance .coche {
-      width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--bordure);
-      display: grid; place-items: center; font-size: 18px; color: transparent;
-    }
-    .seance.faite { border-color: var(--valide); }
-    .seance.faite .coche { background: var(--valide); border-color: var(--valide); color: #fff; }
+    button { appearance: none; font: inherit; color: inherit; cursor: pointer; padding: 0; background: transparent; }
+    button:focus-visible { outline: 2px solid var(--texte); outline-offset: 2px; }
 
-    /* --- Calendrier --- */
-    .jours-semaine, .calendrier { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-    .jours-semaine { color: var(--discret); font-size: 12px; text-align: center; margin-bottom: 6px; }
-    .jour {
-      appearance: none; border: 2px solid transparent; aspect-ratio: 1; border-radius: 8px; padding: 0;
-      background: var(--vide); color: var(--texte); font: inherit; font-size: 13px; cursor: pointer;
+    /* Petites capitales espacées (marque, onglets, titres) */
+    .marque, .onglet, .streak-label, .titre-section, .jours-semaine, .nav-jour span {
+      font-family: var(--mono); font-size: 11px; font-weight: 400; letter-spacing: .16em; text-transform: uppercase;
     }
-    .jour.n1 { background: var(--partiel-clair); }
-    .jour.n2 { background: var(--partiel); }
-    .jour.n3 { background: var(--valide); color: #fff; }
-    .jour.aujourdhui { font-weight: 700; }
-    .jour.selection { border-color: var(--texte); }
-    .jour.futur { visibility: hidden; }
-    .legende { display: flex; gap: 12px; justify-content: center; margin-top: 12px; font-size: 12px; color: var(--discret); }
-    .legende i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
 
     /* --- En-tête & onglets --- */
-    .marque { text-align: center; font-size: 22px; font-weight: 700; letter-spacing: .5px; margin-bottom: 16px; }
-    .onglets { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: var(--vide); border-radius: 12px; padding: 4px; margin-bottom: 20px; }
-    .onglet { appearance: none; border: 0; background: transparent; color: var(--discret); font: inherit; font-size: 15px; padding: 9px 0; border-radius: 9px; cursor: pointer; }
-    .onglet.actif { background: var(--carte); color: var(--texte); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+    .marque { text-align: center; margin-bottom: 6px; }
+    .onglets { display: flex; justify-content: center; gap: 32px; margin-bottom: 32px; }
+    .onglet { height: 44px; border: 0; border-bottom: 1px solid transparent; opacity: .7; }
+    .onglet.actif { border-bottom-color: var(--texte); opacity: 1; }
+    .vue { display: flex; flex-direction: column; gap: 32px; }
     .vue[hidden] { display: none; }
 
+    /* --- Bloc streak --- */
+    .streak { text-align: center; }
+    .streak-nombre { font-size: 104px; font-weight: 300; line-height: 1; letter-spacing: -.04em; }
+    .streak-nombre b { font-weight: inherit; }
+    .streak-label { margin-top: 8px; }
+    .streak-conseil { margin-top: 10px; font-size: 14px; color: var(--discret); min-height: 1.2em; }
+
+    /* --- Titres de section --- */
+    .titre-section { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 0 0 10px; }
+    .titre-section small { font: inherit; color: var(--discret); text-align: right; }
+
+    /* --- Les 3 séances --- */
+    .seances { display: flex; flex-direction: column; gap: 10px; }
+    .seance {
+      height: 56px; display: flex; justify-content: space-between; align-items: center; padding: 0 12px 0 20px;
+      border: 1px solid rgba(255, 249, 243, .35); border-radius: 16px; font-size: 21px; font-weight: 300;
+    }
+    .seance .coche {
+      width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+      font-size: 17px; font-weight: 400; background: var(--creme); color: var(--encre);
+    }
+    .seance.faite { border-color: rgba(255, 249, 243, .6); background: rgba(246, 230, 214, .14); }
+
+    /* --- Calendrier : pastilles plus ou moins colorées (0 à 3 séances) --- */
+    .jours-semaine, .calendrier { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+    .jours-semaine { color: var(--discret); text-align: center; margin-bottom: 10px; }
+    .jour { height: 40px; border: 1px solid var(--bordure); border-radius: 999px; font-size: 13px; }
+    .jour.n1 { background: rgba(246, 230, 214, .12); }
+    .jour.n2 { background: rgba(246, 230, 214, .28); border-color: rgba(255, 249, 243, .4); }
+    .jour.n3 { background: var(--creme); border-color: rgba(255, 249, 243, .6); color: var(--encre); }
+    .jour.aujourdhui { font-weight: 600; }
+    .jour.selection { outline: 1px solid var(--texte); outline-offset: 2px; }
+    .jour.futur { visibility: hidden; }
+
     /* --- Navigation entre les jours (bruxisme) --- */
-    .nav-jour { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    .nav-jour button { appearance: none; border: 1px solid var(--bordure); background: var(--carte); color: var(--texte); width: 40px; height: 40px; border-radius: 12px; font-size: 20px; cursor: pointer; }
-    .nav-jour button:disabled { opacity: .3; cursor: default; }
-    .nav-jour span { font-weight: 600; }
+    .nav-jour { display: flex; justify-content: space-between; align-items: center; margin-bottom: -8px; }
+    .nav-jour button { border: 0; width: 44px; height: 44px; font-size: 22px; }
+    .nav-jour button:disabled { opacity: .35; cursor: default; }
 
     /* --- Saisie des scores 0-10 --- */
-    .question { margin: 0 0 4px; font-size: 16px; font-weight: 600; }
-    .echelle { color: var(--discret); font-size: 12px; margin-bottom: 10px; }
-    .notes { display: grid; grid-template-columns: repeat(11, 1fr); gap: 4px; }
-    .note { appearance: none; border: 1px solid var(--bordure); background: transparent; color: var(--texte); font: inherit; font-size: 13px; padding: 10px 0; border-radius: 8px; cursor: pointer; }
-    .notes.sommeil .note.sel { background: var(--bleu); border-color: var(--bleu); color: #fff; }
-    .notes.machoire .note.sel { background: var(--flamme); border-color: var(--flamme); color: #fff; }
-    .sous-ligne { color: var(--discret); font-size: 13px; margin-top: 8px; min-height: 1.2em; }
+    .question-ligne { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; margin-bottom: 10px; }
+    .question { margin: 0; font-size: 15px; font-weight: 500; }
+    .echelle { color: var(--discret); font-size: 14px; }
+    .notes { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+    .note { height: 44px; border: 1px solid var(--bordure); border-radius: 999px; font-size: 13px; }
+    .note.sel { background: var(--creme); border-color: var(--creme); color: var(--encre); }
 
     /* --- Graphiques --- */
-    .periodes { display: flex; gap: 6px; margin-bottom: 16px; }
-    .periode { appearance: none; border: 1px solid var(--bordure); background: var(--carte); color: var(--discret); font: inherit; font-size: 13px; padding: 6px 14px; border-radius: 999px; cursor: pointer; }
-    .periode.actif { background: var(--texte); border-color: var(--texte); color: var(--bg); }
+    .periodes { display: flex; gap: 8px; }
+    .periode { height: 44px; padding: 0 16px; border: 1px solid var(--bordure); border-radius: 999px; font-size: 13px; }
+    .periode.actif { background: var(--creme); border-color: var(--creme); color: var(--encre); }
     .graph svg { width: 100%; height: auto; display: block; }
-    .graph .grille { stroke: var(--bordure); stroke-width: 1; }
+    .graph .grille { stroke: var(--grille); stroke-width: 1; }
     .graph .axe { fill: var(--discret); font-size: 10px; }
     .graph .vide { fill: var(--discret); font-size: 12px; text-anchor: middle; }
   </style>
@@ -120,26 +122,20 @@
 
   <div class="vue" id="vue-coherence">
   <section class="streak">
-    <div class="streak-nombre"><span>🔥</span> <b id="streak">0</b></div>
+    <div class="streak-nombre"><b id="streak">0</b></div>
     <div class="streak-label" id="streak-label">jour d'affilée</div>
     <div class="streak-conseil" id="conseil"></div>
   </section>
 
-  <section class="carte">
-    <h2 class="carte-titre"><span id="titre-jour">Aujourd'hui</span><small id="compteur">0/3</small></h2>
+  <section>
+    <h2 class="titre-section"><span id="titre-jour">Aujourd'hui</span><small id="compteur">0/3</small></h2>
     <div class="seances" id="seances"></div>
   </section>
 
-  <section class="carte">
-    <h2 class="carte-titre"><span>5 dernières semaines</span><small id="record">Record : 0</small></h2>
+  <section>
+    <h2 class="titre-section"><span>5 semaines</span><small id="record">Record : 0</small></h2>
     <div class="jours-semaine"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
     <div class="calendrier" id="calendrier"></div>
-    <div class="legende">
-      <span><i style="background:var(--vide)"></i>0</span>
-      <span><i style="background:var(--partiel-clair)"></i>1</span>
-      <span><i style="background:var(--partiel)"></i>2</span>
-      <span><i style="background:var(--valide)"></i>3 séances</span>
-    </div>
   </section>
   </div>
 
@@ -150,27 +146,31 @@
       <button id="btn-jour-suivant" onclick="changerJourBrux(1)" aria-label="Jour suivant">›</button>
     </div>
 
-    <section class="carte">
-      <h3 class="question">Qualité du sommeil</h3>
-      <div class="echelle">0 = très mauvaise · 10 = excellente</div>
-      <div class="notes sommeil" id="notes-sommeil"></div>
+    <section>
+      <div class="question-ligne">
+        <h3 class="question">Qualité du sommeil</h3>
+        <span class="echelle">0 mauvaise · 10 excellente</span>
+      </div>
+      <div class="notes" id="notes-sommeil"></div>
     </section>
 
-    <section class="carte">
-      <h3 class="question">Mâchoire tendue</h3>
-      <div class="echelle">0 = détendue · 10 = très tendue</div>
-      <div class="notes machoire" id="notes-machoire"></div>
+    <section>
+      <div class="question-ligne">
+        <h3 class="question">Mâchoire tendue</h3>
+        <span class="echelle">0 détendue · 10 tendue</span>
+      </div>
+      <div class="notes" id="notes-machoire"></div>
     </section>
 
     <div class="periodes" id="periodes"></div>
 
-    <section class="carte graph">
-      <h2 class="carte-titre"><span>Qualité du sommeil</span><small id="moy-sommeil"></small></h2>
+    <section class="graph">
+      <h2 class="titre-section"><span>Sommeil</span><small id="moy-sommeil"></small></h2>
       <div id="graph-sommeil"></div>
     </section>
 
-    <section class="carte graph">
-      <h2 class="carte-titre"><span>Mâchoire tendue</span><small id="moy-machoire"></small></h2>
+    <section class="graph">
+      <h2 class="titre-section"><span>Mâchoire</span><small id="moy-machoire"></small></h2>
       <div id="graph-machoire"></div>
     </section>
   </div>
@@ -285,7 +285,7 @@ function afficher() {
   const s = seancesDu(jourSelectionne);
   document.getElementById("seances").innerHTML = SEANCES.map((nom, i) => `
     <button class="seance ${s[i] ? "faite" : ""}" onclick="basculer(${i})" aria-pressed="${s[i]}">
-      <span class="coche">✓</span>${nom}
+      <span>${nom}</span><span class="coche" aria-hidden="true">${s[i] ? "✓" : "+"}</span>
     </button>`).join("");
 
   // Calendrier : 5 semaines, du lundi d'il y a 4 semaines au dimanche de cette semaine
@@ -299,7 +299,7 @@ function afficher() {
     if (cle === aujourdhui) classes.push("aujourdhui");
     if (cle === jourSelectionne) classes.push("selection");
     if (cle > aujourdhui) classes.push("futur");
-    html += `<button class="${classes.join(" ")}" onclick="selectionner('${cle}')">${d.getDate()}</button>`;
+    html += `<button class="${classes.join(" ")}" onclick="selectionner('${cle}')" aria-label="${d.getDate()}/${d.getMonth() + 1} : ${nbFaites(cle)} séance(s) sur ${OBJECTIF}">${d.getDate()}</button>`;
   }
   document.getElementById("calendrier").innerHTML = html;
   document.getElementById("record").textContent = `Record : ${meilleurStreak()}`;
@@ -320,8 +320,8 @@ let donneesBrux = chargerBrux();
 let jourBrux = cleDuJour(new Date());
 let periodeBrux = 30; // nombre de jours affichés sur les graphiques
 const MESURES = {
-  sommeil:  { couleur: "var(--bleu)" },
-  machoire: { couleur: "var(--flamme)" },
+  sommeil:  { couleur: "var(--creme)" },
+  machoire: { couleur: "var(--peche)" },
 };
 
 // Cliquer sur le score déjà choisi l'efface
@@ -345,7 +345,7 @@ function changerPeriode(n) { periodeBrux = n; afficherBrux(); }
 // ============ 8. Bruxisme : graphiques ============
 // Courbe SVG : un point par jour renseigné, la ligne se coupe quand un jour est manquant
 function graphiqueSVG(mesure) {
-  const L = 400, H = 170, gauche = 26, droite = 10, haut = 10, bas = 22;
+  const L = 400, H = 130, gauche = 26, droite = 10, haut = 10, bas = 22;
   const larg = L - gauche - droite, haut_ = H - haut - bas;
   const n = periodeBrux;
   const fin = new Date();
